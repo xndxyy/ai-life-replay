@@ -63,7 +63,7 @@ export interface ReviewRequest {
 
 const AI_API_BASE = process.env.AI_API_BASE || 'https://ark.cn-beijing.volces.com/api/v3'
 const AI_API_KEY = process.env.AI_API_KEY || ''
-const AI_MODEL = process.env.AI_MODEL || 'ep-20250425155842-vh7r9'
+const AI_MODEL = process.env.AI_MODEL
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'

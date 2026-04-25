@@ -1,5 +1,20 @@
 import type { Metadata } from 'next'
+import { Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google'
 import './globals.css'
+
+const notoSans = Noto_Sans_SC({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '900'],
+  variable: '--font-noto-sans',
+  display: 'swap',
+})
+
+const notoSerif = Noto_Serif_SC({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '900'],
+  variable: '--font-noto-serif',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'AI 人生重开手帐',
@@ -12,14 +27,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
-      <head>
-        <link rel="preconnect" href="https://fonts.loli.net" />
-        <link
-          href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=Noto+Serif+SC:wght@400;600;700;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="zh-CN" className={`${notoSans.variable} ${notoSerif.variable}`}>
       <body className="min-h-screen">
         {children}
       </body>

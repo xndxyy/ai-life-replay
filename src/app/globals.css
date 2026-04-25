@@ -53,7 +53,7 @@ html, body {
   min-height: 100vh;
   background: var(--bg-page);
   color: var(--text-body);
-  font-family: 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-noto-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
