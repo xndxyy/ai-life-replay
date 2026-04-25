@@ -1,0 +1,454 @@
+// 游戏状态管理 - Zustand store
+// 反编译自 re.maa-ai.com 的 AI 人生重开手帐
+
+import { create } from 'zustand'
+import { World, worlds } from '@/data/worlds'
+import { Talent } from '@/data/talents'
+import { GamePhase, GAME_CONFIG, genderOptions, raceOptions, customWorldRaceOptions } from '@/data/config'
+
+// ============================================================
+// 类型定义
+// ============================================================
+
+export interface AttributeState {
+  key: string
+  value: number
+}
+
+export interface AcquiredAttributeState {
+  key: string
+  value: number
+  tierLabel: string
+}
+
+export interface YearEvent {
+  age: number
+  text: string
+  choices?: EventChoice[]
+  chosenIndex?: number
+}
+
+export interface EventChoice {
+  text: string
+  effect: string
+}
+
+export interface GameReview {
+  highlights: string[]
+  scores: {
+    drama: number
+    achievement: number
+    impact: number
+  }
+  rating: string
+  tagline: string
+}
+
+export interface GameSave {
+  version: number
+  phase: GamePhase
+  selectedWorld: string
+  gender: string
+  race: string
+  customInfo: string
+  attributes: AttributeState[]
+  drawnTalents: string[]
+  selectedTalents: string[]
+  currentAge: number
+  yearEvents: YearEvent[]
+  acquiredAttributes: Record<string, number>
+  background?: string
+  character?: string
+  lifespan: number
+  ending: string
+  review?: GameReview
+  customWorldDescription?: string
+  bufferedEvents: YearEvent[]
+}
+
+// ============================================================
+// Store 接口
+// ============================================================
+
+interface GameStore {
+  // 游戏阶段
+  phase: GamePhase
+  setPhase: (phase: GamePhase) => void
+
+  // 世界选择
+  selectedWorld: World | null
+  selectWorld: (worldId: string) => void
+  customWorldDescription: string
+  setCustomWorldDescription: (desc: string) => void
+
+  // 角色信息
+  gender: string
+  race: string
+  customInfo: string
+  setGender: (gender: string) => void
+  setRace: (race: string) => void
+  setCustomInfo: (info: string) => void
+
+  // 属性
+  attributes: AttributeState[]
+  setAttributes: (attrs: AttributeState[]) => void
+  updateAttribute: (key: string, delta: number) => void
+  remainingPoints: number
+
+  // 天赋
+  drawnTalents: Talent[]
+  selectedTalents: Talent[]
+  drawTalents: () => void
+  toggleTalent: (talent: Talent) => void
+  redrawTalents: () => void
+
+  // 游戏状态
+  currentAge: number
+  maxAge: number
+  background: string
+  character: string
+  yearEvents: YearEvent[]
+  bufferedEvents: YearEvent[]
+  isGenerating: boolean
+  isDead: boolean
+  lifespan: number
+  ending: string
+
+  addYearEvents: (events: YearEvent[]) => void
+  bufferedAddYearEvents: (events: YearEvent[]) => void
+  makeChoice: (eventIndex: number, choiceIndex: number) => void
+  setBackground: (text: string) => void
+  setCharacter: (text: string) => void
+  setAge: (age: number) => void
+  setIsGenerating: (v: boolean) => void
+  setDead: (v: boolean) => void
+  setLifespan: (age: number) => void
+  setEnding: (ending: string) => void
+
+  // 后天属性
+  acquiredAttributes: Record<string, number>
+  setAcquiredAttribute: (key: string, value: number) => void
+
+  // 评价
+  review: GameReview | null
+  setReview: (review: GameReview) => void
+
+  // 存档
+  saveToLocalStorage: () => void
+  loadFromLocalStorage: () => boolean
+  resetGame: () => void
+
+  // Session
+  gameSession: string | null
+  setGameSession: (token: string) => void
+}
+
+// ============================================================
+// 初始状态
+// ============================================================
+
+const initialState = {
+  phase: 'idle' as GamePhase,
+  selectedWorld: null as World | null,
+  customWorldDescription: '',
+  gender: '',
+  race: '',
+  customInfo: '',
+  attributes: [] as AttributeState[],
+  drawnTalents: [] as Talent[],
+  selectedTalents: [] as Talent[],
+  currentAge: 0,
+  maxAge: 90,
+  background: '',
+  character: '',
+  yearEvents: [] as YearEvent[],
+  bufferedEvents: [] as YearEvent[],
+  isGenerating: false,
+  isDead: false,
+  lifespan: 0,
+  ending: '',
+  acquiredAttributes: {} as Record<string, number>,
+  review: null as GameReview | null,
+  gameSession: null as string | null,
+}
+
+// ============================================================
+// Utility: 根据属性值计算当前 tier label
+// ============================================================
+
+function getTierLabel(tiers: { min: number; label: string }[], value: number): string {
+  let label = tiers[0]?.label || ''
+  for (const tier of tiers) {
+    if (value >= tier.min) label = tier.label
+  }
+  return label
+}
+
+// ============================================================
+// 创建 Store
+// ============================================================
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  ...initialState,
+
+  get remainingPoints() {
+    const sum = get().attributes.reduce((acc, a) => acc + a.value, 0)
+    return GAME_CONFIG.totalAttributePoints - sum
+  },
+
+  // 该 getter 在 zustand 中不会自动工作，我们覆盖
+  // 通过重新定义，注意 zustand 不支持 getter，将在组件中计算
+
+  setPhase: (phase) => set({ phase }),
+
+  selectWorld: (worldId) => {
+    const world = worlds.find((w) => w.id === worldId)
+    if (!world) return
+
+    // 重置角色属性
+    const attrs = world.attributes.map((a) => ({
+      key: a.key,
+      value: 0,
+    }))
+
+    // 重置后天属性
+    const acquiredAttrs: Record<string, number> = {}
+    world.acquiredAttributes.forEach((a) => {
+      acquiredAttrs[a.key] = a.initialValue
+    })
+
+    set({
+      selectedWorld: world,
+      maxAge: world.maxAge,
+      attributes: attrs,
+      acquiredAttributes: acquiredAttrs,
+      gender: '',
+      race: '',
+      selectedTalents: [],
+      drawnTalents: [],
+      yearEvents: [],
+      bufferedEvents: [],
+      currentAge: 0,
+      background: '',
+      character: '',
+      isDead: false,
+      lifespan: 0,
+      ending: '',
+      review: null,
+      gameSession: null,
+      phase: worldId === 'custom' ? 'idle' : 'attributes',
+    })
+  },
+
+  setCustomWorldDescription: (desc) => set({ customWorldDescription: desc }),
+
+  setGender: (gender) => {
+    set({ gender })
+    // 同时设置对应世界的默认种族
+    const world = get().selectedWorld
+    if (world) {
+      const races = raceOptions[world.id] || customWorldRaceOptions
+      if (!get().race) {
+        set({ race: races[0]?.label || '' })
+      }
+    }
+  },
+
+  setRace: (race) => set({ race }),
+  setCustomInfo: (info) => set({ customInfo: info }),
+
+  setAttributes: (attrs) => set({ attributes: attrs }),
+
+  updateAttribute: (key, delta) => {
+    const attrs = get().attributes
+    const idx = attrs.findIndex((a) => a.key === key)
+    if (idx === -1) return
+
+    const current = attrs[idx].value
+    const newVal = current + delta
+    const sum = attrs.reduce((s, a) => s + a.value, 0)
+
+    // 约束检查
+    if (delta > 0) {
+      // 增加
+      if (sum >= GAME_CONFIG.totalAttributePoints) return
+      if (newVal > GAME_CONFIG.maxBaseAttribute) return
+    } else {
+      // 减少
+      if (newVal < 0) return
+    }
+
+    const newAttrs = [...attrs]
+    newAttrs[idx] = { ...newAttrs[idx], value: newVal }
+    set({ attributes: newAttrs })
+  },
+
+  drawTalents: () => {
+    const { talents: allTalents } = require('@/data/talents')
+    // 随机抽取 3 个天赋
+    const shuffled = [...allTalents].sort(() => Math.random() - 0.5)
+    const drawn = shuffled.slice(0, 3)
+    set({ drawnTalents: drawn, selectedTalents: [] })
+  },
+
+  toggleTalent: (talent) => {
+    const selected = get().selectedTalents
+    const isSelected = selected.some((t) => t.id === talent.id)
+
+    if (isSelected) {
+      // 取消选择
+      set({ selectedTalents: selected.filter((t) => t.id !== talent.id) })
+    } else {
+      // 选择（上限 3 个）
+      if (selected.length >= GAME_CONFIG.talentSelectCount) return
+      // 互斥检查
+      if (talent.mutexGroup) {
+        const hasConflict = selected.some(
+          (t) => t.mutexGroup && t.mutexGroup === talent.mutexGroup
+        )
+        if (hasConflict) return
+      }
+      set({ selectedTalents: [...selected, talent] })
+    }
+  },
+
+  redrawTalents: () => {
+    get().drawTalents()
+  },
+
+  addYearEvents: (events) => {
+    const existing = get().yearEvents
+    set({ yearEvents: [...existing, ...events] })
+  },
+
+  bufferedAddYearEvents: (events) => {
+    const existing = get().bufferedEvents
+    set({ bufferedEvents: [...existing, ...events] })
+  },
+
+  makeChoice: (eventIndex, choiceIndex) => {
+    const events = get().yearEvents
+    if (eventIndex >= events.length) return
+    const event = events[eventIndex]
+    if (!event.choices || choiceIndex >= event.choices.length) return
+
+    const updated = [...events]
+    updated[eventIndex] = { ...event, chosenIndex: choiceIndex }
+    set({ yearEvents: updated })
+
+    // 更新后天属性
+    const choice = event.choices[choiceIndex]
+    if (choice.effect) {
+      // effect 描述里可能包含属性变化信息，由 AI 处理
+      // 实际属性变化由后端生成时已内嵌
+    }
+  },
+
+  setBackground: (text) => set({ background: text }),
+  setCharacter: (text) => set({ character: text }),
+  setAge: (age) => set({ currentAge: age }),
+  setIsGenerating: (v) => set({ isGenerating: v }),
+  setDead: (v) => set({ isDead: v }),
+  setLifespan: (age) => set({ lifespan: age }),
+  setEnding: (ending) => set({ ending }),
+
+  setAcquiredAttribute: (key, value) => {
+    const attrs = { ...get().acquiredAttributes }
+    attrs[key] = value
+    set({ acquiredAttributes: attrs })
+  },
+
+  setReview: (review) => set({ review }),
+
+  setGameSession: (token) => set({ gameSession: token }),
+
+  saveToLocalStorage: () => {
+    const state = get()
+    const save: GameSave = {
+      version: GAME_CONFIG.saveVersion,
+      phase: state.phase,
+      selectedWorld: state.selectedWorld?.id || '',
+      gender: state.gender,
+      race: state.race,
+      customInfo: state.customInfo,
+      attributes: state.attributes,
+      drawnTalents: state.drawnTalents.map((t) => t.id),
+      selectedTalents: state.selectedTalents.map((t) => t.id),
+      currentAge: state.currentAge,
+      yearEvents: state.yearEvents,
+      acquiredAttributes: state.acquiredAttributes,
+      background: state.background,
+      character: state.character,
+      lifespan: state.lifespan,
+      ending: state.ending,
+      review: state.review || undefined,
+      customWorldDescription: state.customWorldDescription,
+      bufferedEvents: state.bufferedEvents,
+    }
+    try {
+      localStorage.setItem('ai-life-save', JSON.stringify(save))
+    } catch (e) {
+      console.error('Save failed:', e)
+    }
+  },
+
+  loadFromLocalStorage: () => {
+    try {
+      const raw = localStorage.getItem('ai-life-save')
+      if (!raw) return false
+
+      const save: GameSave = JSON.parse(raw)
+      if (!save.version || save.version < 2) return false
+
+      const world = worlds.find((w) => w.id === save.selectedWorld)
+      if (!world) return false
+
+      const { talents: allTalents } = require('@/data/talents')
+
+      const drawn = allTalents.filter((t: Talent) => save.drawnTalents.includes(t.id))
+      const selected = allTalents.filter((t: Talent) => save.selectedTalents.includes(t.id))
+
+      set({
+        phase: save.phase,
+        selectedWorld: world,
+        gender: save.gender,
+        race: save.race,
+        customInfo: save.customInfo,
+        attributes: save.attributes,
+        drawnTalents: drawn,
+        selectedTalents: selected,
+        currentAge: save.currentAge,
+        maxAge: world.maxAge,
+        yearEvents: save.yearEvents,
+        bufferedEvents: save.bufferedEvents || [],
+        acquiredAttributes: save.acquiredAttributes || {},
+        background: save.background || '',
+        character: save.character || '',
+        lifespan: save.lifespan || 0,
+        ending: save.ending || '',
+        review: save.review || null,
+        customWorldDescription: save.customWorldDescription || '',
+        isDead: save.phase === 'review',
+        isGenerating: false,
+      })
+      return true
+    } catch (e) {
+      console.error('Load save failed:', e)
+      return false
+    }
+  },
+
+  resetGame: () => {
+    set({ ...initialState })
+    try {
+      localStorage.removeItem('ai-life-save')
+    } catch {}
+  },
+}))
+
+// 计算剩余属性点的 hook
+export function useRemainingPoints() {
+  const attrs = useGameStore((s) => s.attributes)
+  const sum = attrs.reduce((acc, a) => acc + a.value, 0)
+  return GAME_CONFIG.totalAttributePoints - sum
+}
