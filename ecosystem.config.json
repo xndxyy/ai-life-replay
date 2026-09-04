@@ -1,0 +1,25 @@
+{
+  "apps": [{
+    "name": "ai-life-replay",
+    "cwd": "/mnt/c/Users/Administrator/Desktop/ai-life-replay",
+    "script": "npm",
+    "args": "start",
+    "env": {
+      "NODE_ENV": "production",
+      "PORT": "3000",
+      "HOSTNAME": "0.0.0.0"
+    },
+    "watch": false,
+    "max_restarts": 10,
+    "restart_delay": 5000,
+    "min_uptime": "10s",
+    "kill_timeout": 10000
+  }, {
+    "name": "cloudflared-tunnel",
+    "script": "cloudflared",
+    "args": "tunnel run c0003f02-45d3-4bf4-befa-6ce05364990d",
+    "max_restarts": 10,
+    "restart_delay": 5000,
+    "kill_timeout": 10000
+  }]
+}
