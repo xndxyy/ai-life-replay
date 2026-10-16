@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI �����ؿ�����
 
-## Getting Started
+ѡ��һ�����磬�����ɫ�������츳���� AI ���ɱ����������¼�����Ҫ����������ܽᡣ
 
-First, run the development server:
+����һ������ Next.js ��������������ģ����Ŀ���ʺ����齻�����£�Ҳ�ʺ���Ϊ��ǰ��״̬���� �� �������ʾ�� �� ��ʽ���ɡ���ѧϰ������**����������Ԥ�⹤�ߣ��������������鹹���¡�**
+
+> **��ǰ״̬**���ֿ������Ϸ���桢��������ɽӿں���������ش浵����������������Ҫ�������ÿ��õ� AI ����������ҳ��������ģ�͵����Ѿ����á���ǰʵ�ֲ�Ӧδ���ӹ�ֱ����Ϊ�������ѷ�����
+
+## �������淨
+
+- **�������趨**���ִ����С�������ħ����������˵ȱ������Լ��Զ�������������
+- **��ɫ����**������ 12 ���ʼ���ԡ����ѡ�� 3 ���츳����ͬ����ʹ�ø��Ե������������趨��
+- **��������**�������ṩְҵ��ˬ�ġ��������������������������ڡ�
+- **��ʽ��������**����ɫ�����������¼������������ɷ���˵���ģ�ͣ�ǰ�������ʾ��
+- **ѡ��������**����Ҫ�¼��ṩѡ����ѡ����ͽ��ھ����ᴫ�����������ʾ�ʡ�
+- **���ش浵**���ڵ�ǰ�����������ȣ��ɴ���ҳ������Ϸ�������˺���ϵ����豸�ƴ浵��
+
+�淨���ߣ�**ѡ������ �� �������� �� ѡ���츳 �� �Ķ����ƽ��¼� �� ����ѡ�� �� �鿴�����ܽ�**����������������ģ�����Ӱ�죬����֤ÿ�����ɶ��ϸ����������趨��
+
+## ��������
+
+׼�� Git��Node.js �� npm���ֿ�� Docker ��������ʹ�� Node.js 22��Դ��δ�������� `engines` ��Ͱ汾��
+
+```bash
+git clone https://github.com/xndxyy/ai-life-replay.git
+cd ai-life-replay
+npm ci
+```
+
+�ڲֿ��Ŀ¼**�����½�** `.env.local`�����÷����ģ�Ͳ������ֿ�û�пɸ��Ƶ� `.env.example`��
+
+```dotenv
+AI_API_BASE=https://your-provider.example/v1
+AI_API_KEY=replace-with-your-own-key
+AI_MODEL=replace-with-an-available-model
+```
+
+- `AI_API_BASE` �ǽӿ�ǰ׺�������׷�� `/chat/completions`����Ҫ�ظ���д��·����
+- ������Ҫ֧�ֵ�ǰ����ʹ�õ� Chat Completions �������ʽ��Ӧ��ʽ�������ݽӿڡ������������ṩ��������֤��
+- δ����ʱ������ʹ��Ԥ��Ļ�ɽ���۽ӿں�ģ�������� API Key Ĭ��Ϊ�գ�Ĭ��ģ����Ҳ����������˺���ʹ��Ȩ�ޡ�
+- ��ԿֻӦ�����ڷ���˻����У���Ҫ�ĳ� `NEXT_PUBLIC_*` �������ύ�� Git������ `.gitignore` �Ѻ��� `.env*`��
+
+������У�
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+�� [http://localhost:3000](http://localhost:3000)���޸Ļ�������������������������
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ��С����·��
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. ����ҳ������������ѡ��������������⡣
+2. ������Ժ��츳ѡ�񣬽�����¡�
+3. �ȴ��������ɣ���������¼���Ƭ�����������ش����ʱѡ���֧��
+4. ������Ⱥ󣬿���ͬһ�����������Ϸ�����վ�����ݻᶪʧ���ش浵��
 
-## Learn More
+��������ܴ򿪵���������ʧ�ܣ��ȼ���������á�ģ��Ȩ�ޡ��������������Ӧ����Ҫ�� Key �����������С�
 
-To learn more about Next.js, take a look at the following resources:
+## ��������
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| ���� | ��; |
+| --- | --- |
+| `npm run dev` | ���ؿ������� |
+| `npm run lint` | ESLint ��� |
+| `npm run build` | ������������ |
+| `npm start` | �����ѹ�����Ӧ�� |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+�����������̵�׼��˳���� `npm ci`�����û���������`npm run build`��`npm start`���ⲻ���������������߷�������������ǰ���账����֤����������������Ԥ�㡢����У�顢��־�����ʹ�����Ӧ��
 
-## Deploy on Vercel
+## ʵ�ֽṹ
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+app/                    ��ҳ����Ϸҳ������ API
+  api/game/             �Ự���������¼����������۽ӿ�
+  api/count/            ���ڱ��� JSON �ļ��ķ��ʼ���
+components/             ����ѡ�����ԡ��츳���¼����ܽ����
+data/                   ���硢�츳�͸��������������
+lib/api.ts              ������� SSE ��������ʽ����
+store/gameStore.ts      Zustand ״̬�뱾�ش浵
+public/images/worlds/   ��������ͼ��
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+��Ҫ������Next.js 16.2.4��React 19.2.4��TypeScript��Tailwind CSS 4��Zustand �� Framer Motion��׼ȷ������ [package.json](package.json) �����ļ�Ϊ׼��
+
+## ��֪�߽��벿��ע��
+
+- **���²�����ȫ��������**����ɫ�趨��������������ʷ�ᷢ�͸����õ� AI �ṩ������Ҫ������ʵ��˽��������Ϣ�����ÿ��ܲ������á�
+- **�Ự�ӿڲ����ڰ�ȫ��֤**��Ŀǰ���ɽӿ�û���γ�����������У�顢������Ԥ����ƣ����ܽ�ƾ `session` ����ֵ����Ϊ�������ܱ�����
+- **���ʼ���������������ϵͳ**������д�� `data/visit-count.json`����������ʵ����ֻ���ļ�ϵͳ����ʱ�ļ�ϵͳ������Ҫ������ơ�
+- **����������δ����**��[Dockerfile](Dockerfile) �Ḵ�� `.next/standalone`���� [next.config.ts](next.config.ts) ��ǰδ���ö�Ӧ��������ܰ������ļ�ֱ�ӵ�������֤��һ���������𷽰���
+- **���̹������ò���ֱ���հ�**��[ecosystem.config.json](ecosystem.config.json) �����ض�����·����ר���������ã�����ʱӦ������顣
+- **��֤��Χ**���ֿ�û������ `test` �ű���README ����ŵ������������һģ������֤ͨ�������С�ģ����ͨ������������Ӧ���Լ��Ļ��������ա�
+
+## �������ز�
+
+��ǰ�ֿ�δ������ `LICENSE` �ļ������ô��롢�������ݻ�ͼ��ǰ������ȷ����Ӧ��Ȩ��������Դ���Ҫ��������Ҫ��ƾ�ֿ⹫���ͼٶ��������ٷַ���
