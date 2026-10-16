@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI 人生重开手帐
 
-## Getting Started
+选择一个世界，分配角色属性与天赋，让 AI 生成背景、逐年事件、重要抉择和人生总结。
 
-First, run the development server:
+这是一个基于 Next.js 的中文文字人生模拟项目，适合体验交互叙事，也适合作为“前端状态管理 → 服务端提示词 → 流式生成”的学习案例。**它不是人生预测工具，生成内容属于虚构叙事。**
+
+> **当前状态**：仓库包含游戏界面、服务端生成接口和浏览器本地存档。完整故事生成需要自行配置可用的 AI 服务；启动网页并不代表模型调用已经可用。当前实现不应未经加固直接作为公共付费服务部署。
+
+## 功能与玩法
+
+- **多世界设定**：现代都市、仙侠、魔法、赛博朋克等背景，以及自定义世界描述。
+- **角色创建**：分配 12 点初始属性、最多选择 3 个天赋；不同世界使用各自的属性与身份设定。
+- **主题人生**：界面提供职业、爽文、政治人生和恋爱体验等叙事入口。
+- **流式故事生成**：角色背景、后续事件与最终评价由服务端调用模型，前端逐段显示。
+- **选择与延续**：重要事件提供选择，已选结果和近期经历会传入后续生成提示词。
+- **本地存档**：在当前浏览器保存进度，可从首页继续游戏；不是账号体系或跨设备云存档。
+
+玩法主线：**选择世界 → 分配属性 → 选择天赋 → 阅读并推进事件 → 做出选择 → 查看人生总结**。叙事连贯性仍受模型输出影响，不保证每次生成都严格遵守世界设定。
+
+## 本地运行
+
+准备 Git、Node.js 和 npm。仓库的 Docker 构建环境使用 Node.js 22；源码未单独声明 `engines` 最低版本。
+
+```bash
+git clone https://github.com/xndxyy/ai-life-replay.git
+cd ai-life-replay
+npm ci
+```
+
+在仓库根目录**自行新建** `.env.local`，配置服务端模型参数。仓库没有可复制的 `.env.example`：
+
+```dotenv
+AI_API_BASE=https://your-provider.example/v1
+AI_API_KEY=replace-with-your-own-key
+AI_MODEL=replace-with-an-available-model
+```
+
+- `AI_API_BASE` 是接口前缀，代码会追加 `/chat/completions`，不要重复填写该路径。
+- 上游需要支持当前代码使用的 Chat Completions 请求和流式响应格式；“兼容接口”不等于所有提供方均已验证。
+- 未配置时，代码使用预设的火山方舟接口和模型名，但 API Key 默认为空；默认模型名也不代表你的账号有使用权限。
+- 密钥只应保存在服务端环境中，不要改成 `NEXT_PUBLIC_*` 变量或提交到 Git。现有 `.gitignore` 已忽略 `.env*`。
+
+随后运行：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000)。修改环境变量后重新启动开发服务。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 最小体验路径
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. 从首页开启新人生，选择世界或叙事主题。
+2. 完成属性和天赋选择，进入故事。
+3. 等待背景生成，点击最新事件卡片继续；遇到重大抉择时选择分支。
+4. 保存进度后，可在同一浏览器继续游戏。清除站点数据会丢失本地存档。
 
-## Learn More
+如果界面能打开但故事生成失败，先检查服务端配置、模型权限、余额、网络和上游响应，不要把 Key 填到浏览器代码中。
 
-To learn more about Next.js, take a look at the following resources:
+## 常用命令
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| 命令 | 用途 |
+| --- | --- |
+| `npm run dev` | 本地开发服务 |
+| `npm run lint` | ESLint 检查 |
+| `npm run build` | 生成生产构建 |
+| `npm start` | 启动已构建的应用 |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+常规生产进程的准备顺序是 `npm ci`、配置环境变量、`npm run build`、`npm start`。这不是完整的生产上线方案：公网访问前仍需处理认证、请求限流、费用预算、输入校验、日志脱敏和错误响应。
 
-## Deploy on Vercel
+## 实现结构
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+app/                    首页、游戏页与服务端 API
+  api/game/             会话、背景、事件、人生评价接口
+  api/count/            基于本地 JSON 文件的访问计数
+components/             世界选择、属性、天赋、事件与总结界面
+data/                   世界、天赋和各叙事主题的数据
+lib/api.ts              浏览器端 SSE 请求与流式解析
+store/gameStore.ts      Zustand 状态与本地存档
+public/images/worlds/   世界主题图像
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+主要技术：Next.js 16.2.4、React 19.2.4、TypeScript、Tailwind CSS 4、Zustand 与 Framer Motion；准确依赖以 [package.json](package.json) 和锁文件为准。
+
+## 已知边界与部署注意
+
+- **故事不是完全离线生成**：角色设定、背景及部分历史会发送给配置的 AI 提供方，不要输入真实隐私或敏感信息；调用可能产生费用。
+- **会话接口不等于安全认证**：目前生成接口没有形成完整的身份校验、限流或预算控制，不能仅凭 `session` 返回值就认为服务已受保护。
+- **访问计数不是生产分析系统**：计数写入 `data/visit-count.json`，并发、多实例、只读文件系统和临时文件系统场景需要额外设计。
+- **容器配置尚未对齐**：[Dockerfile](Dockerfile) 会复制 `.next/standalone`，而 [next.config.ts](next.config.ts) 当前未启用对应输出；不能把现有文件直接当作已验证的一键容器部署方案。
+- **进程管理配置不可直接照搬**：[ecosystem.config.json](ecosystem.config.json) 包含特定本地路径与专用隧道配置，部署时应重新审查。
+- **验证范围**：仓库没有声明 `test` 脚本；README 不承诺生产构建或任一模型已验证通过。运行、模型连通性与生成质量应在自己的环境中验收。
+
+## 许可与素材
+
+当前仓库未附独立 `LICENSE` 文件。复用代码、主题内容或图像前，请先确认相应授权、上游来源与必要署名；不要仅凭仓库公开就假定可自由再分发。
